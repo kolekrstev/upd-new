@@ -24,6 +24,7 @@ import {
   selectReadabilityData,
   selectVisitsByDayChartData,
   selectVisitsByDayChartTable,
+  selectDyfNoPerVisitsSeries,
 } from './pages-details.selectors';
 import { createColConfigWithI18n } from '@dua-upd/upd/utils';
 
@@ -108,6 +109,8 @@ export class PagesDetailsFacade {
 
   readability$ = this.store.select(selectReadabilityData);
 
+  apexKpiFeedback$ = this.store.select(selectDyfNoPerVisitsSeries);
+
   pageLang$ = this.store.select(selectPageLang);
 
   latestReadability$ = this.readability$.pipe(
@@ -162,6 +165,38 @@ export class PagesDetailsFacade {
     map((readability) => readability?.total_headings)
   );
 
+  currentKpiFeedback$ = this.pagesDetailsData$.pipe(
+    map((data) => {
+      const dyfNoCurrent = data?.dateRangeData?.dyf_no || 0;
+      const visits = data?.dateRangeData?.visits || 0;
+
+      return dyfNoCurrent / visits;
+    })
+  );
+
+  comparisonKpiFeedback$ = combineLatest([this.pagesDetailsData$]).pipe(
+    map(([data]) => {
+      const dyfNoComparison = data?.comparisonDateRangeData?.dyf_no || 0;
+      const visits = data?.comparisonDateRangeData?.visits || 0;
+
+      return dyfNoComparison / visits;
+    })
+  );
+
+  kpiFeedbackPercentChange$ = combineLatest([
+    this.currentKpiFeedback$,
+    this.comparisonKpiFeedback$,
+  ]).pipe(
+    map(([currentKpi, comparisonKpi]) =>
+      percentChange(currentKpi, comparisonKpi)
+    )
+  );
+
+  kpiFeedbackDifference$ = combineLatest([
+    this.currentKpiFeedback$,
+    this.comparisonKpiFeedback$,
+  ]).pipe(map(([currentKpi, comparisonKpi]) => currentKpi - comparisonKpi));
+
   projects$ = combineLatest([this.pagesDetailsData$, this.currentLang$]).pipe(
     map(([data, lang]) => {
       return (
@@ -170,6 +205,14 @@ export class PagesDetailsFacade {
           title: this.i18n.service.translate(d.title, lang),
         })) || []
       );
+    })
+  );
+
+  activityMap$ = combineLatest([
+    this.pagesDetailsData$,
+  ]).pipe(
+    map(([data]) => {
+      return data?.activityMap || [];
     })
   );
 

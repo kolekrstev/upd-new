@@ -122,6 +122,9 @@
   "count": "Nombre",
   "most-frequent-words-on-page": "Mots les plus fréquents sur la page",
   "tooltip-most-frequent-words-on-page": "Les mots les plus fréquents sur la page",
+  "what-visitors-clicked-on": "Clics des visiteurs",
+  "notification-what-visitors-clicked-on": "Ce rapport montre les liens sur lesquels les visiteurs ont cliqué pendant la période de temps sélectionnée. Certains liens peuvent différer ou avoir des comptages combinés. Il comprend les liens traduits par le navigateur, les téléchargements et les clics depuis les menus et les barres latérales.",
+  "tooltip-what-visitors-clicked-on": "Ce que les visiteurs ont cliqué sur la page pendant la période sélectionnée.",
 
   "rank": "Classement",
   "page": "Page",
@@ -179,7 +182,6 @@
   "tooltip-headings": "Le nombre d'en-têtes",
   "tooltip-original-flesch-kincaid-score": "Le score sans considérer les en-têtes et les éléments d'une liste comme des phrases séparées",
   "tooltip-improving-web-readability": "Meilleures pratiques pour améliorer la lisibilité Web",
-
   "dt_search_keyword": "Rechercher un motclé",
   "dt_search_keyword_url": "Recherche par mot-clé ou URL",
   "government_of_canada": "Gouvernement du Canada",
@@ -205,6 +207,7 @@
   "Number of calls (in thousands)": "Nombre d'appels (en milliers)",
   "Number of calls for": "Nombre d'appels pour{{value}}",
   "Calls for ": "Appels pour {{value}}",
+  "Events for ": "Événements pour {{value}}",
   "tests-completed-since2018": "Tests réalisés depuis 2018",
   "tasks-tested-since2018": "Tâches testées depuis 2018",
   "participants-since2018": "Participants testés depuis 2018",
@@ -222,6 +225,8 @@
   "related-tasks": "Tâches connexes",
   "nodata-related-tasks": "Aucune tâche associée pour cette page",
   "visitor-location": "Emplacement du visiteur",
+  "visitor-activity": "Activité du visiteur",
+  "link-text": "Texte du lien",
   "province": "Province",
   "text": "Texte",
   "previous-page-url": "URL de la page précédente",
@@ -306,6 +311,9 @@
   "Target": "Cible :",
   "SAT-title": "Évaluation des principaux termes de recherche (anglais et français) de Canada.ca - {{start}} au {{end}}",
   "SAT-tooltip": "Évaluation des principaux termes de recherche en anglais et en français sur canada.ca et leur URL cible correspondante.",
+  "english-report": "Rapport anglais",
+  "french-report": "Rapport français",
+  "reports": "Rapports",
   "English": "Anglais",
   "French": "Français",
 
@@ -326,7 +334,7 @@
   "kpi-ux-test-title": "Taux de réussite moyen des tests d'expérience utilisateur",
   "kpi-ux-test-tooltip": "Taux de réussite moyen des derniers tests sur tous les tests d'expérience utilisateur complets avec le type de test de validation",
   "kpi-ux-test-guidance": "<strong>Qu'est-ce que c'est?</strong>  <br />Le pourcentage du taux de réussite moyen des derniers tests sur tous les tests d'expérience utilisateur complets avec le type de test de validation.<br />L'objectif pour cet indicateur de performance clé est de 80%.<br /><br /><strong>Comment cet ICR est-il calculé?</strong>  <br />A: La somme des derniers taux de réussite des tests UX (en pourcentage) de tous les tests UX complets avec le type de test Validation<br />B: Le nombre total de tests complets effectués avec le type de test de validation<br /> <br />A/B<br /><br /><div class=\"text-end\"><a href=\"/fr/overview/uxtests\">Visionner plus de données de résultats de tests de l’expérience utilisateurs</a></div>",
-  "kpi-ux-test-text": "{{total}} tests terminés",
+  "kpi-ux-test-text": "{{total}} tâches terminés",
   "Total searches": "Recherches totales",
 
   "Projects in progress": "Projets en cours",
