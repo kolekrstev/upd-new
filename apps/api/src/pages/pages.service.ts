@@ -8,6 +8,8 @@ import type {
   MetricsConfig,
   PageDocument,
   PageMetricsModel,
+  ProjectDocument,
+  TaskDocument,
   UrlModel,
 } from '@dua-upd/db';
 import {
@@ -15,7 +17,9 @@ import {
   Feedback,
   Page,
   PageMetrics,
+  Project,
   Readability,
+  Task,
   Url,
 } from '@dua-upd/db';
 import type {
@@ -26,8 +30,12 @@ import type {
   PagesHomeData,
   PagesHomeAggregatedData,
   ActivityMapMetrics,
+  PageStatus,
 } from '@dua-upd/types-common';
-import { arrayToDictionary, dateRangeSplit } from '@dua-upd/utils-common';
+import {
+  arrayToDictionary,
+  dateRangeSplit,
+} from '@dua-upd/utils-common';
 import { InternalSearchTerm } from '@dua-upd/types-common';
 
 @Injectable()
@@ -40,24 +48,35 @@ export class PagesService {
     private feedbackModel: FeedbackModel,
     @InjectModel(Page.name, 'defaultConnection')
     private pageModel: Model<PageDocument>,
+    @InjectModel(Task.name, 'defaultConnection')
+    private taskModel: Model<TaskDocument>,
+    @InjectModel(Project.name, 'defaultConnection')
+    private projectModel: Model<ProjectDocument>,
     @InjectModel(Readability.name, 'defaultConnection')
     private readabilityModel: Model<Readability>,
     @InjectModel(Url.name, 'defaultConnection')
     private urls: UrlModel,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
+
+  async listPages({ projection, populate }): Promise<Page[]> {
+    let query = this.pageModel.find({}, projection);
+    if (populate) {
+      const populateArray = populate.split(',').map(item => item.trim());
+      query = query.populate(populateArray);
+    }
+
+    return await query.exec();
+  }
 
   async getPagesHomeData(dateRange: string): Promise<PagesHomeData> {
     const cacheKey = `getPagesHomeData-${dateRange}`;
-    const cachedData = (await this.cacheManager.store.get(
+    const cachedData = await this.cacheManager.store.get<PagesHomeData>(
       cacheKey
-    )) as PagesHomeAggregatedData[];
+    );
 
     if (cachedData) {
-      return {
-        dateRange,
-        dateRangeData: cachedData,
-      };
+      return cachedData;
     }
 
     const [startDate, endDate] = dateRangeSplit(dateRange);
@@ -65,29 +84,49 @@ export class PagesService {
       start: startDate,
       end: endDate,
     };
-    const results = await this.db.views.pageVisits.getVisitsWithPageData(
+
+    const pageList = await this.db.views.pageVisits.getVisitsWithPageData(
       queryDateRange,
       this.pageModel
     );
 
+const extractUrls = (pages) => pages
+  .map(page => 'url' in page ? page.url : null)
+  .filter(url => url != null);
+
+const getData = async (model) => {
+  const items = await model.find().populate(['pages']).exec();
+  return items.map(item => ({
+    _id: item._id,
+    title: item.title,
+    urls: extractUrls(item.pages)
+  }));
+};
+
+const taskData = await getData(this.taskModel);
+const projectData = await getData(this.projectModel);
+
+    const results =  {
+      dateRange,
+      taskList: taskData,
+      projectList: projectData,
+      dateRangeData: pageList,
+    };
+
     await this.cacheManager.set(cacheKey, results);
 
-    return {
-      dateRange,
-      dateRangeData: results,
-    };
+    return results;
   }
 
   async getPageDetails(params: ApiParams): Promise<PageDetailsData> {
     if (!params.id) {
       throw Error(
-        'Attempted to get Page details from API but no id was provided.'
+        'Attempted to get Page details from API but no id was provided.',
       );
     }
     const cacheKey = `getPageDetails-${params.id}-${params.dateRange}-${params.comparisonDateRange}`;
-    const cachedData = await this.cacheManager.store.get<PageDetailsData>(
-      cacheKey
-    );
+    const cachedData =
+      await this.cacheManager.store.get<PageDetailsData>(cacheKey);
 
     if (cachedData) {
       return cachedData;
@@ -104,11 +143,13 @@ export class PagesService {
       .populate('projects')
       .lean();
 
-    const urls = (await this.urls
-    .aggregate()
-    .match({page: new Types.ObjectId(params.id)})
-    .project({_id: 0, is_404: 1, redirect: 1})
-    .exec())[0];
+    const urls = (
+      await this.urls
+        .aggregate()
+        .match({ page: new Types.ObjectId(params.id) })
+        .project({ _id: 0, is_404: 1, redirect: 1 })
+        .exec()
+    )[0];
 
     const projects = (page.projects || [])
       .map((project) => {
@@ -161,49 +202,49 @@ export class PagesService {
       await this.pageMetricsModel.getAggregatedPageMetrics(
         params.dateRange,
         queryMetricsConfig,
-        { page: page._id }
+        { page: page._id },
       )
     )[0];
 
     const dateRangeDataByDay = await this.getPageDetailsDataByDay(
       page,
-      params.dateRange
+      params.dateRange,
     );
 
     const comparisonDateRangeData = (
       await this.pageMetricsModel.getAggregatedPageMetrics(
         params.comparisonDateRange,
         queryMetricsConfig,
-        { page: page._id }
+        { page: page._id },
       )
     )[0];
 
     const comparisonDateRangeDataByDay = await this.getPageDetailsDataByDay(
       page,
-      params.comparisonDateRange
+      params.comparisonDateRange,
     );
 
     const aggregatedSearchTermMetrics =
       aggregateSearchTermMetrics(dateRangeDataByDay);
     const aggregatedComparisonSearchTermMetrics = aggregateSearchTermMetrics(
-      comparisonDateRangeDataByDay
+      comparisonDateRangeDataByDay,
     );
 
     const searchTermsWithPercentChange = getSearchTermsWithPercentChange(
       aggregatedSearchTermMetrics,
-      aggregatedComparisonSearchTermMetrics
+      aggregatedComparisonSearchTermMetrics,
     );
 
     const topIncreasedSearchTerms = getTop5IncreaseSearchTerms(
-      searchTermsWithPercentChange
+      searchTermsWithPercentChange,
     );
 
     const top25GSCSearchTerms = getTop25SearchTerms(
-      searchTermsWithPercentChange
+      searchTermsWithPercentChange,
     );
 
     const topDecreasedSearchTerms = getTop5DecreaseSearchTerms(
-      searchTermsWithPercentChange
+      searchTermsWithPercentChange,
     );
 
     const readability = await this.readabilityModel
@@ -214,8 +255,8 @@ export class PagesService {
     const results = {
       ...page,
       is404: urls.is_404,
-    isRedirect: !!urls.redirect,
-    redirectUrl: urls.redirect || null,
+      isRedirect: !!urls.redirect,
+      redirectUrl: urls.redirect || null,
       projects,
       dateRange: params.dateRange,
       dateRangeData: {
@@ -226,7 +267,7 @@ export class PagesService {
         })),
         feedbackByTags: await this.feedbackModel.getCommentsByTag(
           params.dateRange,
-          [page.url]
+          [page.url],
         ),
         dyfByDay: await this.getDyfByDay(params.dateRange, params.id),
       },
@@ -239,7 +280,7 @@ export class PagesService {
         })),
         feedbackByTags: await this.feedbackModel.getCommentsByTag(
           params.comparisonDateRange,
-          [page.url]
+          [page.url],
         ),
         dyfByDay: await this.getDyfByDay(params.comparisonDateRange, params.id),
       },
@@ -505,14 +546,14 @@ function aggregateSearchTermMetrics(dailyPageMetrics: PageMetrics[]) {
 
         for (const metric of ['clicks', 'ctr', 'impressions', 'position']) {
           results[searchTermMetrics.term][metric].push(
-            searchTermMetrics[metric]
+            searchTermMetrics[metric],
           );
         }
       }
 
       return results;
     },
-    {} as Record<string, Record<keyof GscSearchTermMetrics, number[]>>
+    {} as Record<string, Record<keyof GscSearchTermMetrics, number[]>>,
   );
 
   return Object.entries(metricsBySearchTerm).reduce(
@@ -523,7 +564,7 @@ function aggregateSearchTermMetrics(dailyPageMetrics: PageMetrics[]) {
           metrics.ctr.reduce((sum, ctr) => sum + ctr, 0) / metrics.ctr.length,
         impressions: metrics.impressions.reduce(
           (sum, impressions) => sum + impressions,
-          0
+          0,
         ),
         position:
           metrics.position.reduce((sum, position) => sum + position, 0) /
@@ -541,13 +582,13 @@ function aggregateSearchTermMetrics(dailyPageMetrics: PageMetrics[]) {
 
       return results;
     },
-    {} as Record<string, GscSearchTermMetrics>
+    {} as Record<string, GscSearchTermMetrics>,
   );
 }
 
 function getSearchTermsWithPercentChange(
   searchTermMetrics: Record<string, GscSearchTermMetrics>,
-  comparisonSearchTermMetrics: Record<string, GscSearchTermMetrics>
+  comparisonSearchTermMetrics: Record<string, GscSearchTermMetrics>,
 ): Record<string, GscSearchTermMetrics & { change: number }> {
   const uniqueSearchTerms = new Set([
     ...Object.keys(searchTermMetrics),
@@ -587,7 +628,7 @@ const getTop25SearchTerms = (
   searchTermsWithPercentChange: Record<
     string,
     GscSearchTermMetrics & { change: number }
-  >
+  >,
 ) =>
   Object.values(searchTermsWithPercentChange)
     .sort(({ clicks: clicks1 }, { clicks: clicks2 }) => clicks2 - clicks1)
@@ -597,7 +638,7 @@ const getTop5IncreaseSearchTerms = (
   searchTermsWithPercentChange: Record<
     string,
     GscSearchTermMetrics & { change: number }
-  >
+  >,
 ) =>
   Object.values(searchTermsWithPercentChange)
     .sort(({ change: change1 }, { change: change2 }) => change2 - change1)
@@ -607,7 +648,7 @@ const getTop5DecreaseSearchTerms = (
   searchTermsWithPercentChange: Record<
     string,
     GscSearchTermMetrics & { change: number }
-  >
+  >,
 ) =>
   Object.values(searchTermsWithPercentChange)
     .sort(({ change: change1 }, { change: change2 }) => change1 - change2)

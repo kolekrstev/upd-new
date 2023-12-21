@@ -28,6 +28,8 @@ export interface ViewData<T> {
   satComparisonDateRange?: string;
   dateRangeData?: T;
   comparisonDateRangeData?: T;
+  taskList?: string[];
+  projectList?: string[];
 }
 
 export interface EntityDetailsData<T> extends ViewData<T> {
@@ -37,6 +39,7 @@ export interface EntityDetailsData<T> extends ViewData<T> {
 
 export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
+  pageStatus?: PageStatus;
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 
@@ -314,6 +317,7 @@ export type ProjectStatus =
   | 'Unknown';
 
   export type PageStatus =
+  | 'Live'
   | '404'
   | 'Redirected';
 
