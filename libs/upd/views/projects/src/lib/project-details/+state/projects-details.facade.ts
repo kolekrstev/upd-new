@@ -826,7 +826,7 @@ export class ProjectsDetailsFacade {
       return taskSuccessByUxTestKpi?.map((task) => {
         const validation = task.Validation;
         const baseline = task.Baseline;
-        const change = validation - baseline;
+        const change = (Math.round(validation * 100) - Math.round(baseline * 100))/100;
         let isChange = false;
 
         if (change >= 0.2) isChange = true;
@@ -847,8 +847,21 @@ export class ProjectsDetailsFacade {
       if (!uxTests || !uxTests.length) {
         return 0;
       }
+      const maxValuesByGroup = new Map();
 
-      return Math.max(...uxTests.map((test) => test.total_users || 0));
+      uxTests.forEach((test) => {
+        const groupKey = test.test_type;
+        const currentValue = test.total_users || 0;
+
+        if (!maxValuesByGroup.has(groupKey) || currentValue > maxValuesByGroup.get(groupKey)) {
+          maxValuesByGroup.set(groupKey, currentValue);
+        }
+      });
+      const sumOfMaxValues = [...maxValuesByGroup.values()].reduce((acc, val) => acc + val, 0);
+      // const maxValues = uxTests.map((test) => test.total_users || 0);
+      // const sumOfMaxValues = maxValues.reduce((acc, val) => acc + val, 0);
+       return sumOfMaxValues;
+      //return Math.max(...uxTests.map((test) => test.total_users || 0));
     }),
   );
 

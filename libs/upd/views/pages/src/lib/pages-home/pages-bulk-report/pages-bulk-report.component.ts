@@ -104,12 +104,12 @@ export class PagesBulkReportComponent implements OnInit {
 
   dimensionLabel = 'None';
   breakdownLabel = 'Select';
-  granularityLabel = 'Select';
-  granularityValue = 'Select';
+  granularityLabel = 'Daily';
+  granularityValue = 'day';
   isGrouped = false;
 
   granularityOptions = [
-    { label: 'Select', value: 'Select' },
+    // { label: 'Select', value: 'Select' },
     { label: 'Daily', value: 'day' },
     { label: 'Weekly', value: 'week' },
     { label: 'Monthly', value: 'month' }

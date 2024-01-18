@@ -1,6 +1,8 @@
 <h2 class="mb-4">Bulk Report</h2>
-
-<h3 class="mb-2 h5 pt-2 pb-2" [translate]="'select-granularity'"></h3>
+<div><p></p></div>
+<div><p>This feature allows users to create tailored reports for CRA pages by <b>selecting custom date ranges</b>, <b>adding pages through various methods</b> and choosing <b>relevant metrics</b> for detailed analysis. This feature enables precise and comprehensive reporting, catering to diverse needs and offering valuable insights for informed decision-making.</p></div>
+<upd-card [title]="'Select date range for the Report'" titleSize="h5">
+<h3 class="mb-2 h6 pt-2 pb-2" [translate]="'select-granularity'"></h3>
 
 <upd-dropdown
 id="granularity"
@@ -12,7 +14,7 @@ id="granularity"
 </upd-dropdown>
 
 <ng-container *ngIf="isGranularitySelected()">
-<h3 class="mb-2 h5 pt-2 pb-2" [translate]="'select-date'"></h3>
+<h3 class="mb-2 h6 pt-2 pb-2" [translate]="'select-date'"></h3>
 
 <div *ngIf="validationTriggered && !isDateRangeValid()">
   <upd-alert [type]="'danger'" [dismissible]="false" [selfClosing]="false">
@@ -30,7 +32,9 @@ id="granularity"
   [required]="false"
 ></upd-calendar>
 </ng-container>
-
+</upd-card>
+<div><p></p></div>
+<upd-card [title]="'Select Pages for the Report'" titleSize="h5">
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col">
@@ -240,7 +244,9 @@ id="granularity"
   [text]="'Group pages as segment'"
   (checkedChange)="updateConfig(); resetValidation()"
 ></upd-input-switch> -->
-
+</upd-card>
+<div><p></p></div>
+<upd-card [title]="'Select Metrics for the Report'" titleSize="h5">
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-6">
@@ -284,7 +290,7 @@ id="granularity"
     </div>
   </div>
 </div>
-
+</upd-card>
 <hr>
   <button class="btn btn-primary btn-generate-report float-end" (click)="generateAndDownloadReport()">
     Generate and download report

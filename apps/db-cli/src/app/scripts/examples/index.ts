@@ -24,7 +24,7 @@ import { Types } from 'mongoose';
 import { DbService } from '@dua-upd/db';
 import { logJson } from '@dua-upd/utils-common';
 import { RunScriptCommand } from '../../run-script.command';
-import { outputChart, outputTable } from '../utils/output';
+import { outputChart, outputExcel, outputTable } from '../utils/output';
 import { readFile } from 'fs/promises';
 import {
   bytesToMbs,
@@ -33,6 +33,8 @@ import {
   decompressString,
 } from '@dua-upd/node-utils';
 import { startTimer } from '../utils/misc';
+import { pipeline } from 'stream';
+import { fileURLToPath } from 'url';
 
 /*
  * Simplest example, finds one document in pages_metrics and logs it
@@ -43,6 +45,63 @@ export const logOneDocument = async (db: DbService) => {
     .sort({ date: -1 });
 
   logJson(results);
+};
+
+/*
+ * Get total number of Page Feedback comments per month/year
+ * for total number of comments per year, uncomment the ".group" stage
+ */
+export const commentsPerMonth = async (db: DbService) => {
+  const results = await db.collections.feedback.aggregate()
+    .match({
+      date: { $gte: new Date('2023-01-01'), $lt: new Date('2024-01-01') },
+      comment: { 
+        $exists: true,
+        $ne: "" },
+    })
+    .project({ 
+      comment: 1,
+      month: {$month: "$date"}
+    })
+    .group({
+      _id: "$month",
+      comments: {$sum: 1}
+    })
+    // .group({
+    //   _id: null,
+    //   total_comments: {$sum: "$comments"}
+    // })  
+    .sort({ _id: 1 });
+
+  logJson(results);
+  
+  // const sheets = [
+  //   {
+  //     sheetName: 'test',
+  //     data: results,
+  //   }];
+
+  // outputExcel('commentsPerMonth.xlsx', sheets)
+};
+
+/*
+ * Get total number of GSC impression (Overall) for a date range
+ */
+export const gscImmpressionsPerPeriod = async (db: DbService) => {
+  const results = await db.collections.overall.aggregate()
+    .match({
+      date: { $gte: new Date('2022-07-01'), $lte: new Date('2022-12-31') },
+      gsc_total_impressions: { 
+        $exists: true,
+        $ne: "" },
+    })
+    .group({
+      _id: null,
+      total_impressions: {$sum:  "$gsc_total_impressions"}
+    });
+
+  logJson(results);
+
 };
 
 /*
