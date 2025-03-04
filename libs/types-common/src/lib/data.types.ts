@@ -16,7 +16,7 @@ import type {
   IReadability,
   IAnnotations,
   IReports,
-  UrlHash,
+  IFeedback,
 } from './schema.types';
 import type { MostRelevantCommentsAndWordsByLang } from './feedback.types';
 
@@ -292,6 +292,10 @@ export type OverviewFeedback = {
     sections?: string;
   }[];
   feedbackByDay: { date: string; sum: number }[];
+};
+
+export type PartialOverviewFeedback = OverviewFeedback & {
+  mostRelevantCommentsAndWords: { parts: number };
 };
 
 export type InternalSearchTerm = {
@@ -641,3 +645,15 @@ export type PageFlowData = {
   entries?: number;
   exits?: number;
 };
+
+export type CustomReportsComment = Pick<IFeedback, 'comment' | 'date' | 'url'> & {
+  taskTitles: string[];
+  projectTitles: string[];
+};
+
+export type CustomReportsFeedback = {
+  comments: CustomReportsComment[];
+  selectedPages: { _id: string; title: string }[];
+  selectedTasks: { _id: string; title: string; pages: string[] }[];
+  selectedProjects: { _id: string; title: string; pages: string[] }[];
+}
